@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Forensics CTF - Kasus Joe Jacobs</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom styling for terminal feel -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .monospace {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
+
+    <!-- Header / Nav -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="bg-emerald-500/10 border border-emerald-500/30 p-2 rounded-lg">
+                <!-- Inline SVG Logo: Forensic Magnifier + Folder -->
+                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-wide text-white flex items-center gap-2">
+                    DF-CTF: <span class="text-emerald-400 font-mono">The Jacobs Trail</span>
+                </h1>
+                <p class="text-xs text-slate-400">Platform Investigasi Forensik Digital Praktis - Semester 6</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-md flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs text-slate-300 font-mono" id="score-display">Skor: 0 / 500 XP</span>
+            </div>
+            <button onclick="toggleLecturerPanel()" class="bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-xs px-3 py-1.5 rounded-md font-medium transition duration-200">
+                🔑 Panel Dosen
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-[1600px] w-full mx-auto">
+        
+        <!-- Left Column: Case Briefing & CTF Progress (4 Cols) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            <!-- Case Briefing Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+                <div class="bg-slate-950 border-b border-slate-800 px-5 py-3 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Berkas Kasus #82-A
+                    </span>
+                    <span class="text-xs bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded">Prioritas Tinggi</span>
+                </div>
+                <div class="p-5 flex flex-col gap-4">
+                    <div class="flex gap-4 items-start">
+                        <!-- Simulated Mugshot Placeholder -->
+                        <div class="w-20 h-20 bg-slate-950 border border-slate-800 rounded-lg flex flex-col items-center justify-center p-2 shrink-0">
+                            <span class="text-3xl">👨‍💼</span>
+                            <span class="text-[9px] text-slate-500 mt-1 font-mono">JOE_JACOBS</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">Joe Jacobs (28 Tahun)</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Tersangka pengedar narkotika di kawasan sekolah menengah.</p>
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">TKP: Smith Hill High</span>
+                                <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">BB: Floppy Disk (.E01)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800/60 pt-3">
+                        <p><strong>Kronologi:</strong> Tersangka ditangkap di area parkir SMA Smith Hill oleh aparat yang menyamar. Sebelum diringkus, ia menyombongkan kualitas ganjanya dan mengklaim pemasoknya memproduksi sendiri.</p>
+                        <p><strong>Anti-Forensik:</strong> Saat rumahnya digeledah, hanya ditemukan satu buah <em>Floppy Disk</em> tanpa komputer. Tersangka menolak bekerja sama dan menghapus berkas-berkas penting dari disk tersebut.</p>
+                        <p class="text-emerald-400 font-semibold bg-emerald-950/20 border border-emerald-900/30 p-2 rounded">
+                            Misi Anda: Analisis citra disk (image) untuk mengungkap identitas penyuplai, mengembalikan dokumen penting yang sengaja dihapus, dan memetakan jadwal distribusi narkotika tersangka!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flag Submission Board -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl flex-1 flex flex-col">
+                <div class="bg-slate-950 border-b border-slate-800 px-5 py-3">
+                    <h3 class="font-bold text-sm tracking-wide text-white">SUBMISI BENDERA (FLAGS)</h3>
+                </div>
+                <div class="p-5 flex-1 overflow-y-auto space-y-4" id="challenges-container">
+                    <!-- Challenges are dynamically injected here to maintain state cleanly -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Interactive Workstation (8 Cols) -->
+        <section class="lg:col-span-8 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl min-h-[650px]">
+            <!-- Tab Controls -->
+            <div class="bg-slate-950 border-b border-slate-800 px-4 flex items-center justify-between">
+                <div class="flex overflow-x-auto">
+                    <button onclick="switchTab('tab-imager')" id="btn-tab-imager" class="px-4 py-3 text-xs font-bold tracking-wide border-b-2 border-emerald-500 text-emerald-400 flex items-center gap-2 transition duration-200">
+                        📁 Virtual FTK Imager
+                    </button>
+                    <button onclick="switchTab('tab-recovery')" id="btn-tab-recovery" class="px-4 py-3 text-xs font-bold tracking-wide border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition duration-200">
+                        🔧 Recovery Toolkit
+                    </button>
+                    <button onclick="switchTab('tab-bintext')" id="btn-tab-bintext" class="px-4 py-3 text-xs font-bold tracking-wide border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition duration-200">
+                        🔍 BinText (String Extractor)
+                    </button>
+                    <button onclick="switchTab('tab-scheduler')" id="btn-tab-scheduler" class="px-4 py-3 text-xs font-bold tracking-wide border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition duration-200">
+                        📊 Dekriptor Jadwal (.xls)
+                    </button>
+                </div>
+                <span class="text-[10px] font-mono text-slate-500 hidden sm:inline-block">DIF-603 WORKSTATION v2.5</span>
+            </div>
+
+            <!-- Tab Contents Workspace -->
+            <div class="flex-1 p-6 flex flex-col">
+                
+                <!-- TAB 1: FTK IMAGER SIMULATION -->
+                <div id="tab-imager" class="tab-content flex-1 flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                            <h4 class="font-bold text-white text-sm">Akses data citra disk (Floppy Disk Image)</h4>
+                            <p class="text-xs text-slate-400">Verifikasi berkas dan amati struktur direktori biner.</p>
+                        </div>
+                        <div class="text-xs text-slate-400 bg-slate-950 px-3 py-1 rounded border border-slate-800 font-mono">
+                            MD5: b676147f63923e1f428131d59b1d6a72
+                        </div>
+                    </div>
+
+                    <!-- Layout: Directory Tree + File Viewer -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                        <!-- Dir Tree -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Struktur Bukti</span>
+                            <div class="space-y-1 text-xs">
+                                <div class="flex items-center gap-2 p-1.5 rounded bg-slate-900 text-slate-200">
+                                    💾 <span class="font-semibold font-mono">floppy_image.E01 (ROOT)</span>
+                                </div>
+                                <div class="pl-4 space-y-1 border-l border-slate-800 mt-1">
+                                    <!-- coverpage.jpg -->
+                                    <div onclick="previewFile('coverpage')" class="flex items-center justify-between p-1.5 rounded hover:bg-slate-900 cursor-pointer text-slate-300">
+                                        <span class="flex items-center gap-1.5">🖼️ coverpage.jpg</span>
+                                        <span class="text-[10px] font-mono text-slate-500">8.55 KB</span>
+                                    </div>
+                                    <!-- Jimmy Jungle.doc (Deleted indication) -->
+                                    <div onclick="previewFile('jimmy_deleted')" class="flex items-center justify-between p-1.5 rounded hover:bg-slate-900 cursor-pointer text-red-400/80 bg-red-950/10 border border-red-900/20">
+                                        <span class="flex items-center gap-1.5">📄 [X] Jimmy Jungle.doc</span>
+                                        <span class="text-[9px] bg-red-900/20 text-red-400 px-1 rounded uppercase">Dihapus</span>
+                                    </div>
+                                    <!-- ScheduledVisits.exe (Obfuscated ZIP) -->
+                                    <div onclick="previewFile('visits_exe')" class="flex items-center justify-between p-1.5 rounded hover:bg-slate-900 cursor-pointer text-slate-300">
+                                        <span class="flex items-center gap-1.5">⚙️ ScheduledVisits.exe</span>
+                                        <span class="text-[10px] font-mono text-slate-500">2.36 KB</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dir File Content/Metadata Preview -->
+                        <div class="md:col-span-2 bg-slate-950 border border-slate-800 rounded-lg p-4 flex flex-col" id="file-viewer-container">
+                            <div class="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500" id="empty-viewer">
+                                <svg class="w-12 h-12 text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-xs font-semibold text-slate-400">Pilih Berkas di Pohon Direktori</p>
+                                <p class="text-[11px] text-slate-600 mt-1">Gunakan jendela kiri untuk memantau detail berkas yang terekam pada floppy disk.</p>
+                            </div>
+
+                            <!-- Preview Coverpage.jpg -->
+                            <div id="preview-coverpage" class="hidden flex-1 flex flex-col gap-3">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <span class="text-xs font-bold text-slate-300 font-mono">FILE: coverpage.jpg</span>
+                                    <span class="text-[10px] bg-blue-900/20 text-blue-400 border border-blue-900/30 px-2 py-0.5 rounded">Metadata EXIF Aktif</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center justify-center bg-slate-900/60 rounded p-4 border border-slate-800">
+                                    <!-- High Times Magazine Cover Mock-up (Retro SVG) -->
+                                    <div class="w-48 h-60 bg-gradient-to-br from-green-950 to-emerald-900 rounded border border-emerald-500/40 p-3 flex flex-col justify-between shadow-lg relative overflow-hidden">
+                                        <div class="absolute inset-0 bg-emerald-500/5 pointer-events-none bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                                        <div class="text-center">
+                                            <h5 class="font-extrabold text-red-500 tracking-wider text-xl font-mono">HIGH TIMES</h5>
+                                            <p class="text-[7px] text-slate-300 tracking-widest uppercase">The Marijuana & Hemp Authority</p>
+                                        </div>
+                                        <div class="text-center my-auto flex flex-col items-center">
+                                            <span class="text-5xl drop-shadow-md">🌿</span>
+                                            <span class="text-[9px] font-bold text-yellow-400 mt-2 tracking-wide uppercase">SUPREME COLOMBIAN SEEDS</span>
+                                        </div>
+                                        <div class="border-t border-emerald-500/20 pt-2 flex justify-between items-end text-white">
+                                            <div class="text-left">
+                                                <p class="text-[6px] text-slate-400">Edisi April</p>
+                                                <p class="text-[8px] font-bold font-mono">$4.99 USD</p>
+                                            </div>
+                                            <p class="text-[6px] text-slate-300 italic font-serif">"Supplier Terbaik Tahun Ini!"</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mt-4 text-center">Tersangka sangat bangga bahwa hasil panen miliknya masuk halaman depan sampul majalah terkenal ini.</p>
+                                </div>
+                            </div>
+
+                            <!-- Preview Jimmy Jungle.doc (Deleted State) -->
+                            <div id="preview-jimmy-deleted" class="hidden flex-1 flex flex-col gap-3">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <span class="text-xs font-bold text-red-400 font-mono">FILE: Jimmy Jungle.doc</span>
+                                    <span class="text-[10px] bg-red-950 text-red-400 border border-red-900/40 px-2 py-0.5 rounded">STATUS: DELETED</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center justify-center text-center p-6 bg-red-950/5 border border-red-950/20 rounded">
+                                    <span class="text-4xl mb-2">🗑️</span>
+                                    <h5 class="font-bold text-red-400 text-sm">Klaster Berkas Terhapus!</h5>
+                                    <p class="text-xs text-slate-300 mt-1 max-w-sm">
+                                        Data dalam klaster berkas ini tidak dapat dibaca langsung karena *pointer* tabel alokasi file (FAT) telah dirusak/dihapus oleh tersangka.
+                                    </p>
+                                    <button onclick="switchTab('tab-recovery')" class="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition duration-150 shadow-md">
+                                        Buka Modul Recovery Toolkit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Preview ScheduledVisits.exe (Encrypted) -->
+                            <div id="preview-visits-exe" class="hidden flex-1 flex flex-col gap-3">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <span class="text-xs font-bold text-slate-300 font-mono">FILE: ScheduledVisits.exe</span>
+                                    <span class="text-[10px] bg-yellow-900/20 text-yellow-500 border border-yellow-900/30 px-2 py-0.5 rounded">Ekstensi Mencurigakan</span>
+                                </div>
+                                <div class="flex-1 flex flex-col justify-between bg-slate-900/40 p-4 rounded border border-slate-800">
+                                    <div class="space-y-2 text-xs">
+                                        <p class="text-slate-300"><strong>Hasil Pindai Struktur Berkas (File Signature):</strong></p>
+                                        <div class="bg-slate-950 p-2 rounded border border-slate-800 monospace text-[11px] text-yellow-400 leading-normal">
+                                            HEX: 50 4B 03 04 14 00 01 00 ...<br>
+                                            ASCII: PK.......... (Tanda pengenal kompresi ZIP)
+                                        </div>
+                                        <p class="text-slate-400 leading-normal">
+                                            ⚠️ **Temuan Analisis:** Berkas ini dinamai <code class="bg-slate-800 px-1 py-0.5 rounded text-white text-[11px]">ScheduledVisits.exe</code>, namun memiliki tanda tangan biner (Magic Bytes) berupa <code class="bg-slate-800 px-1 py-0.5 rounded text-white text-[11px]">PK</code>. Ini membuktikan tersangka memanipulasi ekstensi berkas. Ini sebenarnya adalah berkas **ZIP Terkompresi dan Terproteksi Sandi**!
+                                        </p>
+                                    </div>
+                                    <div class="bg-yellow-950/20 border border-yellow-900/30 p-2.5 rounded text-xs text-yellow-300">
+                                        <strong>Petunjuk:</strong> Ekstrak biner dari disk menggunakan string extractor (BinText) untuk melacak kunci sandi enkripsi berkas ZIP ini.
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: RECOVERY TOOL SIMULATION -->
+                <div id="tab-recovery" class="tab-content hidden flex-1 flex flex-col gap-4">
+                    <div class="border-b border-slate-800 pb-3">
+                        <h4 class="font-bold text-white text-sm">NTFS/FAT Data Recovery Toolkit</h4>
+                        <p class="text-xs text-slate-400">Pindai klaster yang tidak dialokasikan (unallocated clusters) untuk merekonstruksi data yang terhapus.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 flex-1">
+                        <!-- Controls panel (Left) -->
+                        <div class="md:col-span-5 bg-slate-950 border border-slate-800 rounded-lg p-4 flex flex-col gap-4">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Opsi Pemulihan Sektor</span>
+                            
+                            <div class="space-y-3">
+                                <label class="block text-xs font-semibold text-slate-300">Pilih Berkas Untuk Dipulihkan:</label>
+                                <select id="recovery-select" class="w-full bg-slate-900 border border-slate-800 rounded-md p-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                                    <option value="none">-- Pilih Berkas Terdeteksi --</option>
+                                    <option value="jimmy">Jimmy Jungle.doc (Unallocated Cluster #104)</option>
+                                    <option value="invalid">System Volume Info (Unallocated Cluster #999)</option>
+                                </select>
+                            </div>
+
+                            <button onclick="runRecoverySimulation()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-md transition duration-150 flex items-center justify-center gap-2">
+                                ⚡ Jalankan SuperScan & Recovery
+                            </button>
+
+                            <div class="border-t border-slate-800/80 pt-3 text-[11px] text-slate-400 leading-normal space-y-1.5">
+                                <p>ℹ️ **Prinsip Kerja:** Saat berkas dihapus, sistem operasi hanya menghapus penunjuk alokasi berkas tersebut. Isi data mentah akan tetap utuh di dalam sektor disk sampai tertimpa data baru.</p>
+                            </div>
+                        </div>
+
+                        <!-- Result display (Right) -->
+                        <div class="md:col-span-7 bg-slate-950 border border-slate-800 rounded-lg p-4 flex flex-col" id="recovery-output-container">
+                            <!-- Idle State -->
+                            <div class="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500" id="recovery-idle">
+                                <span class="text-3xl mb-2">📡</span>
+                                <p class="text-xs font-semibold text-slate-400">Menunggu Inisiasi Pemindaian</p>
+                                <p class="text-[11px] text-slate-600 mt-0.5">Pilih target klaster lalu klik tombol 'Jalankan SuperScan' untuk memulihkan isi berkas.</p>
+                            </div>
+
+                            <!-- Scanning Animation -->
+                            <div class="hidden flex-1 flex-col items-center justify-center text-center p-6" id="recovery-loading">
+                                <div class="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                <p class="text-xs font-mono text-emerald-400 animate-pulse">MEMINDAI KLUSTER SEKTOR 104-2420...</p>
+                            </div>
+
+                            <!-- Restored File Output -->
+                            <div class="hidden flex-1 flex flex-col gap-2" id="recovery-result">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                    <span class="text-xs font-bold text-emerald-400 font-mono">PEMULIHAN BERHASIL: Jimmy Jungle.doc</span>
+                                    <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-900/40 px-1.5 py-0.2 rounded uppercase">Sektor Utuh</span>
+                                </div>
+                                <div class="flex-1 bg-slate-900/60 border border-slate-800 rounded p-3 text-xs leading-normal overflow-y-auto font-serif text-slate-300 max-h-[320px]">
+                                    <div class="border-b border-slate-800/60 pb-2 mb-2 font-mono text-[10px] text-slate-400">
+                                        <strong>Kepada:</strong> Jimmy Jungle (626 Jungle Ave Apt 2, Jungle, NY 11111)<br>
+                                        <strong>Dari:</strong> Joe Jacobs
+                                    </div>
+                                    <p class="mb-3">Jimmy:</p>
+                                    <p class="mb-3">Dude, your pot must be the best - it made the cover of High Times Magazine! Thanks for sending me the Cover Page. What do you put in your soil when you plant the marijuana seeds? At least I know your growing it and not some guy in Columbia.</p>
+                                    <p class="mb-3">These kids, they tell me marijuana isn't addictive, but they don't stop buying from me. Man, I'm sure glad you told me about targeting the high school students. You must have some experience. It's like a guaranteed paycheck. Their parents give them money for lunch and they spend it on my stuff. I'm an entrepreneur. Am I only one you sell to? Maybe I can become distributor of the year!</p>
+                                    <p class="mb-3">I emailed you the schedule that I am using. I think it helps me cover myself and not be predictive. Tell me what you think. To open it, use the same password that you sent me before with that file. Talk to you later.</p>
+                                    <p>Thanks,<br><strong>Joe</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: BINTEXT SIMULATION -->
+                <div id="tab-bintext" class="tab-content hidden flex-1 flex flex-col gap-4">
+                    <div class="border-b border-slate-800 pb-3">
+                        <h4 class="font-bold text-white text-sm">BinText 3.03 (Simulasi Ekstrator String Biner)</h4>
+                        <p class="text-xs text-slate-400">Mengekstrak karakter string ASCII dan Unicode yang tertanam di dalam berkas citra mentah floppy disk.</p>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <!-- Search controls -->
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <input type="text" id="bintext-search" placeholder="Cari string biner (cth: 'pw', 'pass', 'visits', atau kosongkan untuk memuat semua)..." class="w-full bg-slate-950 border border-slate-800 rounded-md p-2.5 pl-3 text-xs text-slate-300 focus:outline-none focus:border-emerald-500 font-mono">
+                            </div>
+                            <button onclick="runBinTextSearch()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 rounded-md transition duration-150">
+                                Cari String
+                            </button>
+                        </div>
+
+                        <!-- String Grid Output -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
+                            <div class="grid grid-cols-12 bg-slate-900 border-b border-slate-800 px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+                                <div class="col-span-3">Offset Fisik</div>
+                                <div class="col-span-3">Offset Memori</div>
+                                <div class="col-span-6">String ASCII Terdeteksi</div>
+                            </div>
+                            <div class="flex-1 overflow-y-auto max-h-[300px] divide-y divide-slate-900 font-mono text-[11px] text-slate-300" id="bintext-rows">
+                                <!-- Preloaded rows -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">000000001B8B</div>
+                                    <div class="col-span-3 text-slate-500">000000001B8B</div>
+                                    <div class="col-span-6 text-emerald-400">V.dM1</div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">0000000021CA</div>
+                                    <div class="col-span-3 text-slate-500">0000000021CA</div>
+                                    <div class="col-span-6 text-slate-300">FAT12   </div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">00000000871C</div>
+                                    <div class="col-span-3 text-slate-500">00000000871C</div>
+                                    <div class="col-span-6 text-slate-300">coverpage.jpg</div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">000000008E20</div>
+                                    <div class="col-span-3 text-slate-500">000000008E20</div>
+                                    <div class="col-span-6 text-slate-300">Jimmy Jungle.doc</div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 bg-yellow-950/20 hover:bg-yellow-950/30">
+                                    <div class="col-span-3 text-yellow-500">00000000CF20</div>
+                                    <div class="col-span-3 text-yellow-500">00000000CF20</div>
+                                    <div class="col-span-6 text-yellow-400 font-bold">pw=goodtimes</div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">00000000D01E</div>
+                                    <div class="col-span-3 text-slate-500">00000000D01E</div>
+                                    <div class="col-span-6 text-slate-300">ScheduledVisits.exe</div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">00000000E1C7</div>
+                                    <div class="col-span-3 text-slate-500">00000000E1C7</div>
+                                    <div class="col-span-6 text-slate-400">comp.zip</div>
+                                </div>
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 text-slate-500">00000001004C</div>
+                                    <div class="col-span-3 text-slate-500">00000001004C</div>
+                                    <div class="col-span-6 text-slate-400">MS-DOS 5.0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: DECRYPTOR & SPREADSHEET VISITS -->
+                <div id="tab-scheduler" class="tab-content hidden flex-1 flex flex-col gap-4">
+                    <div class="border-b border-slate-800 pb-3">
+                        <h4 class="font-bold text-white text-sm">Dekriptor & Peninjau Jadwal (Scheduled Visits)</h4>
+                        <p class="text-xs text-slate-400">Gunakan kata sandi rahasia untuk membuka enkripsi berkas distribusi jadwal tersangka.</p>
+                    </div>
+
+                    <!-- Locked View (Enter Password) -->
+                    <div id="scheduler-locked" class="flex-1 flex flex-col items-center justify-center text-center p-6 bg-slate-950 border border-slate-800 rounded-lg">
+                        <span class="text-4xl mb-3">🔒</span>
+                        <h5 class="font-bold text-white text-sm">Berkas 'Scheduled Visits.xls' Terkunci!</h5>
+                        <p class="text-xs text-slate-400 mt-1 max-w-sm mb-4">
+                            Sistem mendeteksi proteksi enkripsi berkas arsip yang dikirim tersangka ke supplier-nya. Masukkan kata sandi biner yang tepat.
+                        </p>
+                        <div class="flex gap-2 max-w-xs w-full">
+                            <input type="password" id="scheduler-pass-input" placeholder="Masukkan kata sandi..." class="flex-1 bg-slate-900 border border-slate-800 rounded-md px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono text-center">
+                            <button onclick="tryDecryptScheduler()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 rounded-md transition duration-150">
+                                Dekrip
+                            </button>
+                        </div>
+                        <p id="scheduler-error-msg" class="text-[11px] text-red-400 mt-2 hidden">⚠️ Kata sandi salah! Periksa string biner Anda.</p>
+                    </div>
+
+                    <!-- Decrypted Excel Grid View -->
+                    <div id="scheduler-unlocked" class="hidden flex-1 flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 font-mono">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Scheduled Visits.xls - BERHASIL DIDEKRIPSI
+                            </span>
+                            <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-mono text-slate-400">Total: 43 Catatan Rute</span>
+                        </div>
+                        
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg overflow-hidden flex flex-col flex-1">
+                            <div class="grid grid-cols-12 bg-slate-900 border-b border-slate-800 px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+                                <div class="col-span-3">Bulan / Periode</div>
+                                <div class="col-span-3">Hari Kunjungan</div>
+                                <div class="col-span-6">Sekolah Menengah Target</div>
+                            </div>
+                            <div class="flex-1 overflow-y-auto max-h-[280px] divide-y divide-slate-900 text-xs text-slate-300">
+                                <!-- Row 1 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Senin (1)</div>
+                                    <div class="col-span-6 text-slate-100">Smith Hill High School (A)</div>
+                                </div>
+                                <!-- Row 2 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Selasa (2)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Key High School (B)</div>
+                                </div>
+                                <!-- Row 3 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Rabu (3)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Leetch High School (C)</div>
+                                </div>
+                                <!-- Row 4 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Kamis (4)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Birard High School (D)</div>
+                                </div>
+                                <!-- Row 5 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Jumat (5)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Richter High School (E)</div>
+                                </div>
+                                <!-- Row 6 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Senin (1)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Hull High School (F)</div>
+                                </div>
+                                <!-- Row 7 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Selasa (2)</div>
+                                    <div class="col-span-6 text-slate-100">Smith Hill High School (A)</div>
+                                </div>
+                                <!-- Row 8 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Rabu (3)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Key High School (B)</div>
+                                </div>
+                                <!-- Row 9 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Kamis (4)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Leetch High School (C)</div>
+                                </div>
+                                <!-- Row 10 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Jumat (5)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Birard High School (D)</div>
+                                </div>
+                                <!-- Row 11 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Senin (1)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Richter High School (E)</div>
+                                </div>
+                                <!-- Row 12 -->
+                                <div class="grid grid-cols-12 px-3 py-2 hover:bg-slate-900/40">
+                                    <div class="col-span-3 font-semibold text-slate-400">April 2002</div>
+                                    <div class="col-span-3">Selasa (2)</div>
+                                    <div class="col-span-6 text-emerald-400 font-semibold">Hull High School (F)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-indigo-950/20 border border-indigo-900/40 p-3 rounded-lg text-xs leading-normal text-indigo-300">
+                            💡 **Kesimpulan Rute:** Dokumen ini menunjukkan rincian sekolah target selain **Smith Hill High School**. Total ada 5 sekolah tinggi target tambahan (Key, Leetch, Birard, Richter, dan Hull) yang dikunjungi secara bergiliran untuk meredam kecurigaan.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: LECTURER PANEL (Kunci Jawaban) -->
+    <div id="lecturer-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="bg-indigo-950/60 border-b border-indigo-500/20 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🎓</span>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Panel Kontrol Dosen</h3>
+                        <p class="text-xs text-indigo-300">Gunakan data ini untuk memandu jalannya kelas digital forensik.</p>
+                    </div>
+                </div>
+                <button onclick="toggleLecturerPanel()" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4 text-xs leading-relaxed text-slate-300">
+                <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-lg space-y-2">
+                    <h4 class="font-bold text-white flex items-center gap-1.5 text-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Kunci Jawaban Flag Level:
+                    </h4>
+                    <ol class="space-y-1.5 list-decimal list-inside font-mono text-slate-300 mt-1">
+                        <li><strong>Level 1 (Integritas MD5):</strong> <code class="text-emerald-400 font-bold">FLAG{b676147f63923e1f428131d59b1d6a72}</code></li>
+                        <li><strong>Level 2 (Nama Supplier):</strong> <code class="text-emerald-400 font-bold">FLAG{Jimmy_Jungle}</code></li>
+                        <li><strong>Level 3 (Alamat Lengkap):</strong> <code class="text-emerald-400 font-bold">FLAG{626_Jungle_Ave_Apt_2_Jungle_NY_11111}</code></li>
+                        <li><strong>Level 4 (String Rahasia):</strong> <code class="text-emerald-400 font-bold">FLAG{goodtimes}</code></li>
+                        <li><strong>Level 5 (Sekolah Target):</strong> <code class="text-emerald-400 font-bold">FLAG{5_High_Schools}</code></li>
+                    </ol>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="font-bold text-white text-sm">Panduan Mengajar & Skenario CTF:</h4>
+                    <p>1. **Level 1** melatih mahasiswa pentingnya memverifikasi integritas data (*Chain of Custody*) menggunakan fungsi hash sebelum berkas bukti disentuh.</p>
+                    <p>2. **Level 2 & 3** mempraktikkan proses *File Carving* atau pemulihan file terhapus menggunakan Recovery Toolkit yang mensimulasikan pembacaan sektor disk.</p>
+                    <p>3. **Level 4** melatih teknik penemuan kunci melalui ekstraksi *strings* mentah pada biner floppy disk menggunakan utilitas BinText.</p>
+                    <p>4. **Level 5** mengajarkan taktik anti-forensik berupa *obfuscation* (penyamaran berkas `.zip` menjadi `.exe`) dan penyandian bukti rute peredaran narkotika tersangka.</p>
+                </div>
+            </div>
+            
+            <div class="bg-slate-950 border-t border-slate-800 px-6 py-4 flex justify-between items-center">
+                <button onclick="resetCTFState()" class="bg-red-950/40 border border-red-500/20 text-red-400 hover:bg-red-950/60 text-xs font-semibold px-4 py-2 rounded transition">
+                    Reset Progres Mahasiswa
+                </button>
+                <button onclick="toggleLecturerPanel()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded transition">
+                    Tutup Panel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION SYSTEM -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-4 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Laboratorium Keamanan Informasi & Forensik Digital. Hak Cipta Dilindungi Undang-Undang.</p>
+    </footer>
+
+    <!-- CTF JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        // Database Tantangan / Challenges
+        const challenges = [
+            {
+                id: 1,
+                title: "Level 1: Verifikasi Integritas File",
+                desc: "Masukkan nilai MD5 checksum dari berkas image.zip sebagai bukti keabsahan integritas data forensik digital Anda.",
+                placeholder: "Format: FLAG{nilai_md5}",
+                flag: "FLAG{b676147f63923e1f428131d59b1d6a72}",
+                points: 100,
+                hint: "Nilai MD5 dapat ditemukan di panduan pengerjaan atau berkas scenario.md5.",
+                solved: false
+            },
+            {
+                id: 2,
+                title: "Level 2: Identitas Pemasok Rahasia",
+                desc: "Pulihkan berkas rahasia yang dihapus tersangka dari sektor disk. Siapa nama lengkap supplier yang dituju?",
+                placeholder: "Format: FLAG{Nama_Belakang}",
+                flag: "FLAG{Jimmy_Jungle}",
+                points: 100,
+                hint: "Gunakan Modul 'Recovery Toolkit' untuk memindai kluster terhapus pada Jimmy Jungle.doc.",
+                solved: false
+            },
+            {
+                id: 3,
+                title: "Level 3: Titik Koordinat Pemasok",
+                desc: "Lacak alamat lengkap pengiriman supplier berdasarkan isi berkas yang baru saja Anda pulihkan di Level 2.",
+                placeholder: "Format: FLAG{Alamat_Apartemen_Kota_Provinsi_KodePos}",
+                flag: "FLAG{626_Jungle_Ave_Apt_2_Jungle_NY_11111}",
+                points: 100,
+                hint: "Periksa alamat lengkap Jimmy yang tercantum di bagian kop surat / kepala dokumen Jimmy Jungle.doc.",
+                solved: false
+            },
+            {
+                id: 4,
+                title: "Level 4: Ekstraksi Kunci Rahasia",
+                desc: "Analisis karakter mentah (binary strings) di dalam citra disk floppy untuk menemukan kunci proteksi jadwal kunjungan.",
+                placeholder: "Format: FLAG{kata_sandi}",
+                flag: "FLAG{goodtimes}",
+                points: 100,
+                hint: "Gunakan tab BinText dan cari string yang berawalan 'pw='.",
+                solved: false
+            },
+            {
+                id: 5,
+                title: "Level 5: Pemetaan Rute Distribusi",
+                desc: "Dekripsi jadwal kunjungan dengan kunci dari Level 4. Ada berapa banyak sekolah target selain Smith Hill High?",
+                placeholder: "Format: FLAG{X_High_Schools}",
+                flag: "FLAG{5_High_Schools}",
+                points: 100,
+                hint: "Dekrip file xls menggunakan kata sandi 'goodtimes' lalu hitung daftar sekolah sekunder target unik selain Smith Hill.",
+                solved: false
+            }
+        ];
+
+        // State Manager
+        let userScore = 0;
+        let ctfState = {};
+
+        // Inisialisasi awal saat halaman dimuat
+        window.onload = function() {
+            loadState();
+            renderChallenges();
+            updateScore();
+            // Default file viewer setup
+            previewFile('none');
+        };
+
+        // Fungsi Load & Save Progres di LocalStorage agar progres pengerjaan mahasiswa tidak hilang
+        function loadState() {
+            const saved = localStorage.getItem('df_ctf_state_jacobs');
+            if (saved) {
+                try {
+                    ctfState = JSON.parse(saved);
+                    challenges.forEach(c => {
+                        if (ctfState[c.id]) {
+                            c.solved = true;
+                        }
+                    });
+                } catch (e) {
+                    ctfState = {};
+                }
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('df_ctf_state_jacobs', JSON.stringify(ctfState));
+        }
+
+        function resetCTFState() {
+            localStorage.removeItem('df_ctf_state_jacobs');
+            ctfState = {};
+            challenges.forEach(c => c.solved = false);
+            userScore = 0;
+            saveState();
+            renderChallenges();
+            updateScore();
+            showToast("🎮 Progres CTF berhasil di-reset ke awal!", "success");
+            toggleLecturerPanel();
+            // Reset tab views
+            document.getElementById('scheduler-unlocked').classList.add('hidden');
+            document.getElementById('scheduler-locked').classList.remove('hidden');
+            document.getElementById('scheduler-pass-input').value = '';
+        }
+
+        // Render Antarmuka Tantangan secara Dinamis
+        function renderChallenges() {
+            const container = document.getElementById('challenges-container');
+            container.innerHTML = '';
+
+            challenges.forEach((challenge) => {
+                const isPreviousSolved = challenge.id === 1 || challenges[challenge.id - 2].solved;
+                
+                let challengeHTML = '';
+                
+                if (challenge.solved) {
+                    // Tampilan tantangan terselesaikan (Green theme)
+                    challengeHTML = `
+                        <div class="bg-emerald-950/10 border-2 border-emerald-500/30 rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-emerald-500 text-slate-950 text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider rounded-bl font-mono">SOLVED (+${challenge.points} XP)</div>
+                            <h4 class="font-bold text-emerald-400 text-xs flex items-center gap-1.5">✅ ${challenge.title}</h4>
+                            <p class="text-slate-400 text-[11px] leading-relaxed">${challenge.desc}</p>
+                            <div class="bg-emerald-950/30 border border-emerald-500/20 p-2 rounded text-[11px] text-emerald-300 font-mono flex items-center justify-between">
+                                <span>Kunci: <strong class="select-all">${challenge.flag}</strong></span>
+                                <span class="text-xs">🎉</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (isPreviousSolved) {
+                    // Tantangan aktif dan siap dikerjakan
+                    challengeHTML = `
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 flex flex-col gap-3">
+                            <h4 class="font-bold text-white text-xs flex items-center justify-between">
+                                <span>🎯 ${challenge.title}</span>
+                                <span class="text-[10px] text-amber-500 font-mono">${challenge.points} XP</span>
+                            </h4>
+                            <p class="text-slate-400 text-[11px] leading-relaxed">${challenge.desc}</p>
+                            
+                            <div class="flex gap-2">
+                                <input type="text" id="flag-input-${challenge.id}" placeholder="${challenge.placeholder}" class="flex-1 bg-slate-900 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded px-3 py-2 text-xs font-mono text-slate-200">
+                                <button onclick="checkFlag(${challenge.id})" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold px-4 rounded transition duration-150">
+                                    Kirim
+                                </button>
+                            </div>
+                            
+                            <details class="text-[10px] text-slate-500 cursor-pointer select-none">
+                                <summary class="hover:text-slate-300 transition">Butuh petunjuk?</summary>
+                                <p class="mt-1 text-amber-400/80 leading-relaxed bg-amber-500/5 p-2 rounded border border-amber-500/10">${challenge.hint}</p>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    // Tantangan terkunci (Tantangan sebelumnya harus selesai terlebih dahulu)
+                    challengeHTML = `
+                        <div class="bg-slate-950/40 border border-slate-900 rounded-lg p-4 flex flex-col gap-2 opacity-50 select-none">
+                            <h4 class="font-bold text-slate-500 text-xs flex items-center gap-1.5">🔒 ${challenge.title}</h4>
+                            <p class="text-slate-600 text-[11px] leading-normal">Tantangan ini terkunci. Anda harus memecahkan level sebelumnya terlebih dahulu untuk membuka akses data intelijen ini.</p>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML += challengeHTML;
+            });
+        }
+
+        // Fungsi Validasi Flag yang Diinput Mahasiswa
+        function checkFlag(id) {
+            const inputElement = document.getElementById(`flag-input-${id}`);
+            if (!inputElement) return;
+
+            const userInput = inputElement.value.trim();
+            const targetChallenge = challenges.find(c => c.id === id);
+
+            if (!targetChallenge) return;
+
+            // Memvalidasi dengan mencocokkan input (Mendukung case-insensitive & toleransi format tanpa 'FLAG{}' untuk kepraktisan mahasiswa)
+            const cleanInput = userInput.replace(/\s+/g, '');
+            const cleanTarget = targetChallenge.flag.replace(/\s+/g, '');
+            
+            // Cek kecocokan ketat atau kecocokan tanpa FLAG{}
+            const rawFlagMatch = cleanTarget.replace('FLAG{', '').replace('}', '');
+            const userRawMatch = cleanInput.replace('FLAG{', '').replace('}', '');
+
+            if (cleanInput.toLowerCase() === cleanTarget.toLowerCase() || userRawMatch.toLowerCase() === rawFlagMatch.toLowerCase()) {
+                targetChallenge.solved = true;
+                ctfState[id] = true;
+                saveState();
+                
+                showToast(`🎉 Flag Benar! Anda mendapatkan +${targetChallenge.points} XP`, "success");
+                
+                renderChallenges();
+                updateScore();
+            } else {
+                showToast("❌ Flag salah! Coba periksa analisis Anda lagi.", "error");
+                // Efek getar sederhana pada input box
+                inputElement.classList.add('border-red-500', 'animate-bounce');
+                setTimeout(() => {
+                    inputElement.classList.remove('border-red-500', 'animate-bounce');
+                }, 1000);
+            }
+        }
+
+        // Perbarui Tampilan XP Skor
+        function updateScore() {
+            userScore = challenges.filter(c => c.solved).reduce((sum, c) => sum + c.points, 0);
+            document.getElementById('score-display').innerText = `Skor: ${userScore} / 500 XP`;
+        }
+
+        // Navigasi Tab
+        function switchTab(tabId) {
+            // Sembunyikan semua konten tab
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            
+            // Hapus kelas aktif dari semua tombol tab
+            document.querySelectorAll('[id^="btn-tab-"]').forEach(btn => {
+                btn.classList.remove('border-emerald-500', 'text-emerald-400');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+
+            // Tampilkan tab target
+            document.getElementById(tabId).classList.remove('hidden');
+
+            // Tambahkan kelas aktif ke tombol yang diklik
+            document.getElementById(`btn-tab-${tabId.replace('tab-', '')}`).classList.add('border-emerald-500', 'text-emerald-400');
+            document.getElementById(`btn-tab-${tabId.replace('tab-', '')}`).classList.remove('border-transparent', 'text-slate-400');
+        }
+
+        // File Viewer Controller (FTK Imager)
+        function previewFile(fileKey) {
+            // Sembunyikan semua kontainer preview terlebih dahulu
+            document.getElementById('empty-viewer').classList.add('hidden');
+            document.getElementById('preview-coverpage').classList.add('hidden');
+            document.getElementById('preview-jimmy-deleted').classList.add('hidden');
+            document.getElementById('preview-visits-exe').classList.add('hidden');
+
+            if (fileKey === 'coverpage') {
+                document.getElementById('preview-coverpage').classList.remove('hidden');
+            } else if (fileKey === 'jimmy_deleted') {
+                document.getElementById('preview-jimmy-deleted').classList.remove('hidden');
+            } else if (fileKey === 'visits_exe') {
+                document.getElementById('preview-visits-exe').classList.remove('hidden');
+            } else {
+                document.getElementById('empty-viewer').classList.remove('hidden');
+            }
+        }
+
+        // Simulasi Recovery Toolkit
+        function runRecoverySimulation() {
+            const select = document.getElementById('recovery-select');
+            const target = select.value;
+
+            if (target === 'none') {
+                showToast("Pilih berkas yang terdeteksi terlebih dahulu!", "error");
+                return;
+            }
+
+            if (target === 'invalid') {
+                showToast("Sektor klaster ini tidak berisi data berkas yang valid untuk dipulihkan.", "error");
+                return;
+            }
+
+            // Inisiasi efek loading pemindaian forensik
+            document.getElementById('recovery-idle').classList.add('hidden');
+            document.getElementById('recovery-result').classList.add('hidden');
+            document.getElementById('recovery-loading').classList.remove('hidden');
+
+            setTimeout(() => {
+                document.getElementById('recovery-loading').classList.add('hidden');
+                document.getElementById('recovery-result').classList.remove('hidden');
+                showToast("💾 Berkas 'Jimmy Jungle.doc' berhasil dikonstruksi ulang dari sektor 104!", "success");
+            }, 1800);
+        }
+
+        // Pencarian String pada Modul BinText
+        function runBinTextSearch() {
+            const query = document.getElementById('bintext-search').value.toLowerCase().trim();
+            const rowsContainer = document.getElementById('bintext-rows');
+            
+            // Seluruh kumpulan string mentah virtual yang ada pada floppy disk
+            const allStrings = [
+                { offset: "000000001B8B", text: "V.dM1" },
+                { offset: "0000000021CA", text: "FAT12   " },
+                { offset: "0000000045EC", text: "bJI/f/con" },
+                { offset: "00000000871C", text: "coverpage.jpg" },
+                { offset: "000000008E20", text: "Jimmy Jungle.doc" },
+                { offset: "000000009FE5", text: "gm@q&A" },
+                { offset: "00000000A1C7", text: "uOfu_Uf" },
+                { offset: "00000000B313", text: "1C/4N" },
+                { offset: "00000000C40E", text: "4fL1" },
+                { offset: "00000000CF20", text: "pw=goodtimes", highlight: true },
+                { offset: "00000000D01E", text: "ScheduledVisits.exe" },
+                { offset: "00000000E1C7", text: "comp.zip" },
+                { offset: "00000001004C", text: "MS-DOS 5.0" }
+            ];
+
+            rowsContainer.innerHTML = '';
+
+            const filtered = allStrings.filter(item => item.text.toLowerCase().includes(query));
+
+            if (filtered.length === 0) {
+                rowsContainer.innerHTML = `
+                    <div class="p-6 text-center text-slate-500 text-xs">
+                        Tidak ada string yang cocok dengan kata kunci: "${query}"
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const bgClass = item.highlight ? "bg-yellow-950/20 hover:bg-yellow-950/30" : "hover:bg-slate-900/40";
+                const textClass = item.highlight ? "text-yellow-400 font-bold" : "text-slate-300";
+                
+                rowsContainer.innerHTML += `
+                    <div class="grid grid-cols-12 px-3 py-2 ${bgClass}">
+                        <div class="col-span-3 text-slate-500">${item.offset}</div>
+                        <div class="col-span-3 text-slate-500">${item.offset}</div>
+                        <div class="col-span-6 ${textClass}">${item.text}</div>
+                    </div>
+                `;
+            });
+
+            showToast(`Ditemukan ${filtered.length} string biner yang cocok.`, "info");
+        }
+
+        // Simulasi Dekripsi File xls
+        function tryDecryptScheduler() {
+            const pass = document.getElementById('scheduler-pass-input').value.trim();
+            const errorMsg = document.getElementById('scheduler-error-msg');
+
+            if (pass === 'goodtimes') {
+                errorMsg.classList.add('hidden');
+                document.getElementById('scheduler-locked').classList.add('hidden');
+                document.getElementById('scheduler-unlocked').classList.remove('hidden');
+                showToast("🔓 Berkas Scheduled Visits.xls berhasil didekripsi!", "success");
+            } else {
+                errorMsg.classList.remove('hidden');
+                showToast("❌ Sandi salah! Struktur file gagal dipulihkan.", "error");
+            }
+        }
+
+        // Toggle Modal Panel Dosen
+        function toggleLecturerPanel() {
+            const modal = document.getElementById('lecturer-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Sistem Toast/Notifikasi UI
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgStyle = "bg-slate-900 border-slate-800 text-slate-200";
+            if (type === "success") bgStyle = "bg-emerald-950 border-emerald-500/30 text-emerald-300";
+            if (type === "error") bgStyle = "bg-red-950 border-red-500/30 text-red-300";
+            if (type === "info") bgStyle = "bg-blue-950 border-blue-500/30 text-blue-300";
+
+            toast.className = `${bgStyle} border p-3.5 rounded-lg shadow-xl text-xs flex items-center gap-2 max-w-sm transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <span class="text-base">${type === 'success' ? '🏆' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            
+            // Animate In
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Animate Out & Destroy
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
